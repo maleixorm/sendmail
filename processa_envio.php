@@ -14,6 +14,7 @@ class Mensagem {
     private $para;
     private $assunto;
     private $mensagem;
+    public $status = ['codigo_status' => null, 'descricao_status' => null];
 
     function __construct($para, $assunto, $mensagem)
     {
@@ -42,14 +43,14 @@ $mensagem = new Mensagem($_POST['para'], $_POST['assunto'], $_POST['mensagem']);
 
 if (!$mensagem->mensagemValida()) {
     echo 'Mensagem não é válida.';
-    die();
+    header('Location: index.php');
 }
 
 $mail = new PHPMailer(true);
 
 try {
     //Server settings
-    $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+    $mail->SMTPDebug = SMTP::DEBUG_OFF;                      //Enable verbose debug output
     $mail->isSMTP();                                            //Send using SMTP
     $mail->Host       = 'smtp.dominio.com';                     //Set the SMTP server to send through
     $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
@@ -77,8 +78,49 @@ try {
     $mail->AltBody = 'Utilize um client que tenha suporte a HTML para visualizar essa mensagem!';
 
     $mail->send();
-    echo 'A mensagem foi enviada com sucesso!';
+
+    $mensagem->status['codigo_status'] = 1;
+    $mensagem->status['descricao_status'] = 'A mensagem foi enviada com sucesso!';
+    
 } catch (Exception $e) {
-    echo "Não foi possível enviar este e-mail. Tente novamente mais tarde.";
-    echo "<br>Detalhes do erro: {$mail->ErrorInfo}";
+    $mensagem->status['codigo_status'] = 2;
+    $mensagem->status['descricao_status'] = "Não foi possível enviar este e-mail. Tente novamente mais tarde. <br>Detalhes do erro: {$mail->ErrorInfo}";
 }
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Send Mail</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <div class="py-3 text-center">
+            <img class="d-block mx-auto mb-2" src="logo.png" alt="" width="72" height="72">
+            <h2>Send Mail</h2>
+            <p class="lead">Seu app de envio de e-mails particular!</p>
+		</div>
+        <div class="row">
+            <div class="col-md-12">
+                <? if ($mensagem->status['codigo_status'] == 1) { ?>
+                    <div class="container">
+                        <h1 class="display-4 text-success">Sucesso!</h1>
+                        <p><?= $mensagem->status['descricao_status']; ?></p>
+                        <a href="index.php" class="btn btn-success mt-5 text-white">Voltar</a>
+                    </div>
+                <? } ?>
+                <? if ($mensagem->status['codigo_status'] == 2) { ?>
+                    <div class="container">
+                        <h1 class="display-4 text-danger">Ops! :\</h1>
+                        <p><?= $mensagem->status['descricao_status']; ?></p>
+                        <a href="index.php" class="btn btn-danger mt-5 text-white">Voltar</a>
+                    </div>
+                <? } ?>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
